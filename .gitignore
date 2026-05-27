@@ -1,6 +1,5 @@
 venv/
 .venv/
-datasets/
 models/
 outputs/
 __pycache__/
