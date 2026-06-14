@@ -437,28 +437,60 @@ def extract_cnn_cache(cnn_model, records, batch_size: int = CNN_INFERENCE_BATCH_
     """
     if not records:
         return {}
-    export = Model(
-        inputs=cnn_model.inputs,
-        outputs=[
-            cnn_model.get_layer("global_avg_pool").output,
-            cnn_model.get_layer("prediction").output,
-        ],
-        name="cnn_feature_export",
-    )
-    export.trainable = False
-    X = stack_spiral_preprocessed(records)
-    embeddings, probs = export.predict(X, batch_size=batch_size, verbose=0)
-    cache = {}
-    for i, rec in enumerate(records):
-        key = os.path.normpath(rec.path)
-        cache[key] = {
-            "embedding": embeddings[i].astype(np.float32),
-            "prob": float(np.asarray(probs[i]).flatten()[0]),
-        }
-    print(
-        f"[INFO] CNN feature cache: {len(cache)} images | embed_dim={embeddings.shape[1]}"
-    )
-    return cache
+    
+    import pickle
+    cache_path = os.path.join("outputs", "cnn_cache.pkl")
+    disk_cache = {}
+    
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "rb") as f:
+                disk_cache = pickle.load(f)
+            # Check if all records are in disk cache
+            all_cached = True
+            for r in records:
+                if os.path.normpath(r.path) not in disk_cache:
+                    all_cached = False
+                    break
+            if all_cached:
+                print(f"[INFO] Loaded CNN feature cache for {len(records)} images from disk cache: {cache_path}")
+                return {os.path.normpath(r.path): disk_cache[os.path.normpath(r.path)] for r in records}
+        except Exception as ex:
+            print(f"[WARNING] Could not load disk cache: {ex}")
+            disk_cache = {}
+
+    # Find missing records
+    missing_records = [r for r in records if os.path.normpath(r.path) not in disk_cache]
+    if missing_records:
+        print(f"[INFO] Extracting CNN features for {len(missing_records)} missing images...")
+        export = Model(
+            inputs=cnn_model.inputs,
+            outputs=[
+                cnn_model.get_layer("global_avg_pool").output,
+                cnn_model.get_layer("prediction").output,
+            ],
+            name="cnn_feature_export",
+        )
+        export.trainable = False
+        X = stack_spiral_preprocessed(missing_records)
+        embeddings, probs = export.predict(X, batch_size=batch_size, verbose=0)
+        for i, rec in enumerate(missing_records):
+            key = os.path.normpath(rec.path)
+            disk_cache[key] = {
+                "embedding": embeddings[i].astype(np.float32),
+                "prob": float(np.asarray(probs[i]).flatten()[0]),
+            }
+        
+        # Save to disk
+        try:
+            os.makedirs(os.path.dirname(cache_path) or ".", exist_ok=True)
+            with open(cache_path, "wb") as f:
+                pickle.dump(disk_cache, f)
+            print(f"[SUCCESS] Saved updated CNN feature cache to disk: {cache_path}")
+        except Exception as ex:
+            print(f"[WARNING] Could not save disk cache: {ex}")
+
+    return {os.path.normpath(r.path): disk_cache[os.path.normpath(r.path)] for r in records}
  
  
 def extract_single_cnn_features(cnn_model, image_path: str):

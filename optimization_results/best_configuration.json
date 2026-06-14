@@ -1,0 +1,40 @@
+{
+  "threshold": 0.6500000000000004,
+  "accuracy": 0.8940397350993378,
+  "balanced_accuracy": 0.885537959944108,
+  "precision": 0.9532710280373832,
+  "recall": 0.9026548672566371,
+  "f1": 0.9272727272727272,
+  "roc_auc": 0.955519329296693,
+  "mcc": 0.7363934782944894,
+  "ranking_method": "xgboost_importance",
+  "feature_count": 15,
+  "params": {
+    "num_leaves": 38,
+    "max_depth": 11,
+    "learning_rate": 0.14054782233442645,
+    "feature_fraction": 0.9011997258604892,
+    "bagging_fraction": 0.8283798869098468,
+    "bagging_freq": 3,
+    "min_child_samples": 9,
+    "lambda_l1": 1.0471866009247666,
+    "lambda_l2": 1.711795712923505
+  },
+  "features_list": [
+    "tqwt_entropy_shannon_dec_16",
+    "tqwt_entropy_log_dec_12",
+    "std_delta_delta_log_energy",
+    "tqwt_TKEO_std_dec_12",
+    "tqwt_minValue_dec_13",
+    "tqwt_entropy_log_dec_18",
+    "b1",
+    "mean_MFCC_6th_coef",
+    "tqwt_stdValue_dec_25",
+    "tqwt_energy_dec_6",
+    "f2",
+    "tqwt_energy_dec_4",
+    "tqwt_kurtosisValue_dec_27",
+    "numPulses",
+    "std_6th_delta"
+  ]
+}

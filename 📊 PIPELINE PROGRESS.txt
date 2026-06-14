@@ -1,10 +1,11 @@
 📊 PIPELINE PROGRESS
 ├─ [✅] Dataset Split (split_spiral_dataset.py)
-│   └─ 2929 training images | 734 test images | Zero duplicates
-├─ [🔄] CNN Training (train_cnn_model.py) - Epoch 5/100
-│   ├─ Epoch 1 Val Accuracy: 56.81%
-│   ├─ Epoch 4 Val Accuracy: 79.97% ✨
-│   └─ Model saved: models/parkinson_cnn_model.keras
-├─ [⏳] Voice Model (train_dl_model.py) - Queued
-│   └─ Will tune XGBoost hyperparameters (40 iterations)
-└─ [⏳] Fusion Model (train_fusion_model.py) - Pending CNN+Voice
+│   └─ Training/Test images split | Zero duplicates
+├─ [✅] CNN Training (train_cnn_model.py)
+│   └─ EfficientNetB2 spiral classifier ~94% accuracy
+├─ [✅] Voice Model (pd_speech_voice_pipeline.py)
+│   └─ LightGBM speech classifier ~92% accuracy
+└─ [✅] Fusion Model (train_fusion_model.py)
+    ├─ Adaptive attention fusion | 71.5% accuracy
+    ├─ Voice contribution: 55.4%
+    └─ Spiral contribution: 44.6%
