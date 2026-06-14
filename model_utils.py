@@ -462,7 +462,7 @@ def extract_cnn_cache(cnn_model, records, batch_size: int = CNN_INFERENCE_BATCH_
     # Find missing records
     missing_records = [r for r in records if os.path.normpath(r.path) not in disk_cache]
     if missing_records:
-        print(f"[INFO] Extracting CNN features for {len(missing_records)} missing images...")
+        print(f"[INFO] Extracting CNN features for {len(missing_records)} missing images in batches...")
         export = Model(
             inputs=cnn_model.inputs,
             outputs=[
@@ -472,14 +472,21 @@ def extract_cnn_cache(cnn_model, records, batch_size: int = CNN_INFERENCE_BATCH_
             name="cnn_feature_export",
         )
         export.trainable = False
-        X = stack_spiral_preprocessed(missing_records)
-        embeddings, probs = export.predict(X, batch_size=batch_size, verbose=0)
-        for i, rec in enumerate(missing_records):
-            key = os.path.normpath(rec.path)
-            disk_cache[key] = {
-                "embedding": embeddings[i].astype(np.float32),
-                "prob": float(np.asarray(probs[i]).flatten()[0]),
-            }
+        
+        # Process in batches to avoid OOM
+        chunk_size = 256
+        for i in range(0, len(missing_records), chunk_size):
+            chunk_records = missing_records[i : i + chunk_size]
+            X_chunk = stack_spiral_preprocessed(chunk_records)
+            emb_chunk, prob_chunk = export.predict(X_chunk, batch_size=batch_size, verbose=0)
+            
+            for j, rec in enumerate(chunk_records):
+                key = os.path.normpath(rec.path)
+                disk_cache[key] = {
+                    "embedding": emb_chunk[j].astype(np.float32),
+                    "prob": float(np.asarray(prob_chunk[j]).flatten()[0]),
+                }
+            print(f"  -> Processed {min(i + chunk_size, len(missing_records))}/{len(missing_records)} images")
         
         # Save to disk
         try:
