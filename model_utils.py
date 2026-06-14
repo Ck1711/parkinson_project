@@ -25,13 +25,13 @@ from tensorflow.keras.layers import (
     RandomZoom,
     RandomTranslation,
 )
-from tensorflow.keras.applications import EfficientNetB2
+from tensorflow.keras.applications import EfficientNetB3
 from tensorflow.keras.applications.efficientnet import preprocess_input
  
 # ---------------------------------------------------------------------------
-# Global image / model paths (224x224 everywhere)
+# Global image / model paths (300x300 everywhere)
 # ---------------------------------------------------------------------------
-IMG_SIZE = 224
+IMG_SIZE = 300
 IMG_SHAPE = (IMG_SIZE, IMG_SIZE, 3)
  
 EFFICIENTNET_MODEL_PATH = os.path.join("models", "efficientnet_model.keras")
@@ -378,7 +378,7 @@ def build_efficientnet_classifier(
     Returns (full_model, backbone) for two-phase training.
     """
     inputs = Input(shape=input_shape, name="image_input")
-    base_model = EfficientNetB2(
+    base_model = EfficientNetB3(
         include_top=False,
         weights="imagenet",
         input_tensor=inputs,
