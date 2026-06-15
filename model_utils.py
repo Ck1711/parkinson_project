@@ -404,6 +404,7 @@ def build_efficientnet_classifier(
     return model, base_model
  
  
+@tf.keras.utils.register_keras_serializable(package="Custom")
 class AdaptiveModalityFusion(tf.keras.layers.Layer):
     """
     Sample-wise softmax gates over voice vs spiral embeddings (no Lambda layers).

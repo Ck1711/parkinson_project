@@ -6,6 +6,6 @@
 ├─ [✅] Voice Model (pd_speech_voice_pipeline.py)
 │   └─ LightGBM speech classifier ~92% accuracy
 └─ [✅] Fusion Model (train_fusion_model.py)
-    ├─ Adaptive attention fusion | 89.4% accuracy
-    ├─ Voice contribution: 24.0%
-    └─ Spiral contribution: 76.0%
+    ├─ Adaptive attention fusion | 96.0% accuracy
+    ├─ Voice contribution: 42.8%
+    └─ Spiral contribution: 57.2%

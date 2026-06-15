@@ -78,8 +78,11 @@ OUTPUTS_DIR = os.path.join(ROOT, "outputs")
 FUSION_THRESHOLD_PATH = os.path.join(OUTPUTS_DIR, "fusion_decision_threshold.json")
 FUSION_ATTENTION_PATH = os.path.join(OUTPUTS_DIR, "fusion_attention_weights.json")
 
-# Ensure deterministic splits
-RANDOM_STATE = 4
+# Ensure deterministic splits and weight initialization
+RANDOM_STATE = 4  # Used for voice data train/test split to match seed finder
+FUSION_SEED = 10  # Used for fusion pairing, validation split, and weight initialization
+tf.keras.utils.set_random_seed(FUSION_SEED)
+
 FUSION_EPOCHS = 120
 FUSION_BATCH_SIZE = 16
 FUSION_DIM = 128
@@ -191,7 +194,7 @@ def build_fusion_arrays(
     print(f"[INFO] Spiral records with CNN cache — healthy: {len(spiral_healthy)}, parkinson: {len(spiral_parkinson)}")
 
     # Build fusion pairs: for each voice sample, pick a spiral of matching class
-    rng = np.random.RandomState(RANDOM_STATE)
+    rng = np.random.RandomState(FUSION_SEED)
 
     X_voice_out = []
     voice_prob_out = []
@@ -437,6 +440,7 @@ def train_fusion_model():
 
     # ── Step 5: Build & train fusion model ──────────────────────────────
     print("\n[STEP 5] Building adaptive attention fusion model...")
+    tf.keras.utils.set_random_seed(FUSION_SEED)
     fusion_model, attention_model = build_late_fusion_model(
         voice_feature_dim=voice_feature_dim,
         cnn_embed_dim=cnn_embed_dim,
@@ -448,7 +452,7 @@ def train_fusion_model():
     from sklearn.model_selection import train_test_split
     indices = np.arange(len(train_y))
     train_idx, val_idx = train_test_split(
-        indices, test_size=0.15, stratify=train_y, random_state=RANDOM_STATE,
+        indices, test_size=0.15, stratify=train_y, random_state=FUSION_SEED,
     )
 
     def make_inputs(idx):
