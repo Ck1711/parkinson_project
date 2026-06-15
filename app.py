@@ -282,6 +282,31 @@ def extract_audio_features(file_path):
             
     return matched_features
 
+def clean_image_background(img):
+    """
+    Normalizes the image background to pure white while preserving the stroke details.
+    Removes shadows, lighting gradients, and paper color.
+    """
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    
+    # Estimate the background using morphological dilation and median filtering
+    struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+    dilated = cv2.dilate(gray, struct_elem)
+    bg_estimate = cv2.medianBlur(dilated, 31)
+    
+    # Calculate difference and normalize (division method for lighting normalization)
+    bg_estimate = np.clip(bg_estimate, 1, 255)
+    normalized = np.uint8(np.clip((gray.astype(np.float32) / bg_estimate.astype(np.float32)) * 255.0, 0, 255))
+    
+    # Push near-white pixels to pure white (255) to clean up noise
+    _, thresholded = cv2.threshold(normalized, 240, 255, cv2.THRESH_TRUNC)
+    cleaned_gray = cv2.normalize(thresholded, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+    
+    # Convert back to RGB
+    cleaned_rgb = cv2.cvtColor(cleaned_gray, cv2.COLOR_GRAY2RGB)
+    return cleaned_rgb
+
 # ---------------------------------------------------------------------------
 # API Routing
 # ---------------------------------------------------------------------------
@@ -336,7 +361,11 @@ def predict():
             return jsonify({"error": "Invalid drawing image"}), 400
             
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img_resized = cv2.resize(img_rgb, (300, 300), interpolation=cv2.INTER_AREA)
+        
+        # Clean image background to resolve phone photo shadows/noise bias
+        img_cleaned = clean_image_background(img_rgb)
+        
+        img_resized = cv2.resize(img_cleaned, (300, 300), interpolation=cv2.INTER_AREA)
         img_preprocessed = apply_efficientnet_preprocess(img_resized.astype(np.float32))
         img_input = np.expand_dims(img_preprocessed, axis=0)
         
